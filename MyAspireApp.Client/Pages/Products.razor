@@ -1,0 +1,57 @@
+﻿@using MyAspireApp.Client.Models
+
+@page "/products"
+@inject HttpClient Http
+
+<h3>Products</h3>
+
+<!-- List Products -->
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <ul>
+        @foreach (var product in products)
+        {
+            <li>@product.Name - $@product.Price</li>
+        }
+    </ul>
+}
+
+<!-- Add New Product -->
+<h4>Add New Product</h4>
+
+<EditForm Model="newProduct" OnValidSubmit="AddProduct">
+    <InputText @bind-Value="newProduct.Name" placeholder="Product Name" class="form-control" />
+    <InputNumber @bind-Value="newProduct.Price" placeholder="Product Price" class="form-control" />
+    <button type="submit" class="btn btn-primary mt-2">Add Product</button>
+</EditForm>
+
+@code {
+    private List<Product>? products;
+    private Product newProduct = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>("api/products");
+    }
+
+    private async Task AddProduct()
+    {
+        var response = await Http.PostAsJsonAsync("api/products", newProduct);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var createdProduct = await response.Content.ReadFromJsonAsync<Product>();
+            products?.Add(createdProduct!);
+
+            newProduct = new Product(); // Reset form
+        }
+        else
+        {
+            // Handle error if needed
+        }
+    }
+}
